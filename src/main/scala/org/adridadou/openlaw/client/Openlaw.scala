@@ -312,7 +312,13 @@ object Openlaw {
 
   private def getInitialParameter(variable:VariableDefinition, executionResult: TemplateExecutionResult):String =
     variable.defaultValue
-      .flatMap(variable.varType(executionResult).construct(_, executionResult))
+      .flatMap {
+        variable
+          .varType(executionResult)
+          .construct(_, executionResult)
+          .left.map(t => throw t)  // mimics current behavior
+          .toOption
+      }
       .map(variable.varType(executionResult).internalFormat).getOrElse("")
 
 
