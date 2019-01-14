@@ -42,6 +42,34 @@ export class APIClient {
     return this.loginPromise;
   }
 
+  async fileUploadCall(url: String, file: File): Promise<Object> {
+    return this.waitForLogin().then(() => {
+      let callHeaders = Object.assign({});
+      if (this.jwt) {
+        callHeaders['OPENLAW_JWT'] = this.jwt;
+      }
+
+      const postCallDetails = {
+        method: 'post',
+        url: this.conf.root + url,
+        headers: callHeaders,
+        auth: undefined,
+      };
+
+      if (this.conf.auth) {
+        postCallDetails.auth = Object.assign({}, this.conf.auth);
+      }
+
+      return axios(postCallDetails).then(result => {
+        if (result.headers['openlaw_jwt']) {
+          this.jwt = result.headers['openlaw_jwt'];
+        }
+        return result;
+      }).catch((error) => {
+        throw error;
+      });
+    }); }
+
   async postCall(url: string, params: any, headers: ?Object): Promise<Object> {
     return this.waitForLogin().then(() => {
       let callHeaders = Object.assign({}, headers);
@@ -618,4 +646,13 @@ export class APIClient {
       });
   }
 
+  async storeFile(file: File) {
+    return this.fileUploadCall('/user/file', file)
+      .then(response => response.data);
+  }
+
+  async listFiles() {
+    return this.getCall('/user/files')
+      .then(response => response.data);
+  }
 }
